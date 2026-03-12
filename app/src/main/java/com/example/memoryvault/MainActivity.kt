@@ -14,8 +14,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.memoryvault.ui.screens.Screens
+import com.example.memoryvault.ui.screens.AddMemoryScreen
+import com.example.memoryvault.ui.screens.HomeScreen
+import com.example.memoryvault.ui.screens.MemoryDetailScreen
+import com.example.memoryvault.ui.screens.SearchScreen
 import com.example.memoryvault.ui.theme.MemoryVaultTheme
+import com.example.memoryvault.utils.Routes
+import com.example.memoryvault.utils.Routes.ADD_MEMORY
+import com.example.memoryvault.utils.Routes.HOME
+import com.example.memoryvault.utils.Routes.MEMORY_DETAIL
+import com.example.memoryvault.utils.Routes.SEARCH
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,27 +44,27 @@ fun AppNavigator(){
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "home",
+        startDestination = HOME,
         builder = {
-            composable("home"){
-                Screens().HomeScreen(
+            composable(HOME){
+                HomeScreen(
                     onMemoryNavigation = {
-                        navController.navigate("add_memory")
+                        navController.navigate(ADD_MEMORY)
                     },
                     onSearchNavigation = {
-                        navController.navigate("search")
+                        navController.navigate(SEARCH)
                     }
                 )
             }
 
-            composable("add_memory"){
-                Screens().AddMemoryScreen()
+            composable(ADD_MEMORY){
+                AddMemoryScreen()
             }
-            composable("memory_details"){
-                Screens().MemoryDetailScreen()
+            composable(MEMORY_DETAIL){
+                MemoryDetailScreen()
             }
-            composable("search"){
-                Screens().SearchScreen()
+            composable(SEARCH){
+                SearchScreen()
             }
         }
     )
