@@ -8,5 +8,5 @@ data class Memory(
     val category: String,
     val timestamp: Long,
     val reminderTime: Long?,
-    val isSynced: Boolean?
+    val isSynced: Boolean = false
 )
