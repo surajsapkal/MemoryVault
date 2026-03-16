@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -36,13 +38,15 @@ fun AddMemoryScreen(
     var title by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    val rememberScroll = rememberScrollState()
 
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(10.dp)
+            .verticalScroll(rememberScroll),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = "Title",
