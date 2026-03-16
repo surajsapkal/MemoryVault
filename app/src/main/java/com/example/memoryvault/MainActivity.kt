@@ -10,7 +10,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -19,6 +21,7 @@ import com.example.memoryvault.ui.screens.HomeScreen
 import com.example.memoryvault.ui.screens.MemoryDetailScreen
 import com.example.memoryvault.ui.screens.SearchScreen
 import com.example.memoryvault.ui.theme.MemoryVaultTheme
+import com.example.memoryvault.ui.viewmodels.MemoryViewModel
 import com.example.memoryvault.utils.Routes
 import com.example.memoryvault.utils.Routes.ADD_MEMORY
 import com.example.memoryvault.utils.Routes.HOME
@@ -42,6 +45,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigator(){
     val navController = rememberNavController()
+    val viewModel: MemoryViewModel = hiltViewModel()
     NavHost(
         navController = navController,
         startDestination = HOME,
@@ -58,7 +62,13 @@ fun AppNavigator(){
             }
 
             composable(ADD_MEMORY){
-                AddMemoryScreen()
+
+
+                AddMemoryScreen(LocalContext.current){memory ->
+                    // on submit handle
+                    viewModel.insertMemory(memory)
+                    navController.popBackStack() //to remove from stack
+                }
             }
             composable(MEMORY_DETAIL){
                 MemoryDetailScreen()
