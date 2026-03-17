@@ -43,9 +43,9 @@ class MemoryRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getUnsyncedMemories(): List<Memory> {
-        return memoryDao.getUnsyncedMemories().map {
-            MemoryMapper.entityToDomain(it)
+    override fun getUnsyncedMemories(): Flow<List<Memory>> {
+        return memoryDao.getUnsyncedMemories().map { entityList ->
+            entityList.map { MemoryMapper.entityToDomain(it) }
         }
     }
 }

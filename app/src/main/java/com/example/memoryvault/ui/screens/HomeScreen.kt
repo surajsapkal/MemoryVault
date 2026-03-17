@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -38,7 +39,48 @@ fun HomeScreen(
     onMemoryNavigation:() -> Unit,
     onSearchNavigation:() -> Unit,
 ){
-    Column(modifier = Modifier.fillMaxSize()) {
+
+    val list = viewmodel.memoriesState.collectAsState()
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    onMemoryNavigation()
+                }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Item")
+            }
+        },
+        // You can specify the FAB position (End is default)
+        // floatingActionButtonPosition = FabPosition.Center
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+        ){
+            if (list.value.isEmpty()){
+                // show no memories UI
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "No Memories!",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }else{
+                // show list UI
+                LazyColumn {
+                    items(list.value,{it.id}){ currentMemory ->
+
+                        MemoryCard(currentMemory, onMemoryNavigation)
+
+                    }
+                }
+            }
+        }
+    }
+
+    /*olumn(modifier = Modifier.fillMaxSize()) {
 
         val list = viewmodel.memoriesState.collectAsState()
 
@@ -75,7 +117,7 @@ fun HomeScreen(
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
         }
-    }
+    }*/
 }
 
 @Composable
@@ -83,7 +125,7 @@ fun MemoryCard(currentMemory: Memory, onMemoryNavigation: () -> Unit) {
 
     Box(
         modifier = Modifier.fillMaxWidth()
-            .padding(10.dp)
+            .padding(20.dp)
             .background(color = Color.White)
     ){
         Column(modifier = Modifier.fillMaxSize()) {

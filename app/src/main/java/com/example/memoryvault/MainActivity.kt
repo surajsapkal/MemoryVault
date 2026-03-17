@@ -27,7 +27,9 @@ import com.example.memoryvault.utils.Routes.ADD_MEMORY
 import com.example.memoryvault.utils.Routes.HOME
 import com.example.memoryvault.utils.Routes.MEMORY_DETAIL
 import com.example.memoryvault.utils.Routes.SEARCH
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

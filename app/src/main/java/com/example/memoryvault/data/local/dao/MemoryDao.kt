@@ -30,6 +30,6 @@ interface MemoryDao {
     suspend fun deleteMemory(memory: MemoryEntity)
 
     @Query("SELECT * FROM $TABLE_NAME WHERE isSynced = 0")
-    suspend fun getUnsyncedMemories(): List<MemoryEntity>
+    fun getUnsyncedMemories(): Flow<List<MemoryEntity>>
 
 }
