@@ -1,6 +1,7 @@
 package com.example.memoryvault.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,8 +37,8 @@ import com.example.memoryvault.utils.Utils
 @Composable
 fun HomeScreen(
     viewmodel: MemoryViewModel = hiltViewModel(),
-    onMemoryNavigation:() -> Unit,
-    onSearchNavigation:() -> Unit,
+    onAddMemoryNavigation:() -> Unit,
+    onMemoryDetailNavigation:(Long) -> Unit,
 ){
 
     val list = viewmodel.memoriesState.collectAsState()
@@ -46,7 +47,7 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onMemoryNavigation()
+                    onAddMemoryNavigation()
                 }
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Item")
@@ -72,61 +73,23 @@ fun HomeScreen(
                 LazyColumn {
                     items(list.value,{it.id}){ currentMemory ->
 
-                        MemoryCard(currentMemory, onMemoryNavigation)
+                        MemoryCard(currentMemory, onMemoryDetailNavigation)
 
                     }
                 }
             }
         }
     }
-
-    /*olumn(modifier = Modifier.fillMaxSize()) {
-
-        val list = viewmodel.memoriesState.collectAsState()
-
-        Box(
-            modifier = Modifier.fillMaxSize().padding(10.dp),
-            contentAlignment = Alignment.Center
-        ){
-            if (list.value.isEmpty()){
-                // show no memories UI
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "No Memories!",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            }else{
-                // show list UI
-                LazyColumn {
-                    items(list.value,{it.id}){ currentMemory ->
-
-                        MemoryCard(currentMemory, onMemoryNavigation)
-
-                    }
-                }
-            }
-
-            FloatingActionButton(
-                modifier = Modifier.padding(10.dp).height(40.dp).width(40.dp),
-                onClick = {
-                    onMemoryNavigation()
-                }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
-        }
-    }*/
 }
 
 @Composable
-fun MemoryCard(currentMemory: Memory, onMemoryNavigation: () -> Unit) {
+fun MemoryCard(currentMemory: Memory, onMemoryDetailNavigation: (Long) -> Unit) {
 
     Box(
         modifier = Modifier.fillMaxWidth()
             .padding(20.dp)
             .background(color = Color.White)
+            .clickable(onClick = { onMemoryDetailNavigation(currentMemory.id) })
     ){
         Column(modifier = Modifier.fillMaxSize()) {
             Row(

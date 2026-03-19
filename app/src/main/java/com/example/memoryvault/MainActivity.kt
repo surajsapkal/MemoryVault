@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,9 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.example.memoryvault.ui.screens.AddMemoryScreen
 import com.example.memoryvault.ui.screens.HomeScreen
 import com.example.memoryvault.ui.screens.MemoryDetailScreen
@@ -23,10 +25,6 @@ import com.example.memoryvault.ui.screens.SearchScreen
 import com.example.memoryvault.ui.theme.MemoryVaultTheme
 import com.example.memoryvault.ui.viewmodels.MemoryViewModel
 import com.example.memoryvault.utils.Routes
-import com.example.memoryvault.utils.Routes.ADD_MEMORY
-import com.example.memoryvault.utils.Routes.HOME
-import com.example.memoryvault.utils.Routes.MEMORY_DETAIL
-import com.example.memoryvault.utils.Routes.SEARCH
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -50,21 +48,20 @@ fun AppNavigator(){
     val viewModel: MemoryViewModel = hiltViewModel()
     NavHost(
         navController = navController,
-        startDestination = HOME,
+        startDestination = Routes.Home.route,
         builder = {
-            composable(HOME){
+            composable(Routes.Home.route){
                 HomeScreen(
-                    onMemoryNavigation = {
-                        navController.navigate(ADD_MEMORY)
+                    onAddMemoryNavigation = {
+                        navController.navigate(Routes.AddMemory)
                     },
-                    onSearchNavigation = {
-                        navController.navigate(SEARCH)
+                    onMemoryDetailNavigation = { memoryId ->
+                        navController.navigate(Routes.MemoryDetails.createRoute(memoryId))
                     }
                 )
             }
 
-            composable(ADD_MEMORY){
-
+            composable(Routes.AddMemory.route){
 
                 AddMemoryScreen(LocalContext.current){memory ->
                     // on submit handle
@@ -72,10 +69,18 @@ fun AppNavigator(){
                     navController.popBackStack() //to remove from stack
                 }
             }
-            composable(MEMORY_DETAIL){
-                MemoryDetailScreen()
+            composable(
+                route = Routes.MemoryDetails.route,
+                arguments = listOf(
+                    navArgument("memoryId"){
+                        type = NavType.LongType
+                    }
+                )
+            ){
+                val id = it.arguments?.getLong("memoryId") ?: 0L
+                MemoryDetailScreen(id)
             }
-            composable(SEARCH){
+            composable(Routes.Search.route){
                 SearchScreen()
             }
         }
