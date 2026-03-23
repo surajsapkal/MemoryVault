@@ -20,6 +20,9 @@ class MemoryViewModel @Inject constructor(
     private val _selectedMemory = MutableStateFlow<Memory?>(null)
     val selectedMemory: StateFlow<Memory?> = _selectedMemory
 
+    private val _uiEvent = MutableStateFlow<String?>(null)
+    val uiEvent: StateFlow<String?> = _uiEvent
+
 
     val memoriesState = repository.getAllMemories()
         .stateIn(
@@ -38,6 +41,7 @@ class MemoryViewModel @Inject constructor(
     fun insertMemory(memory: Memory) {
         viewModelScope.launch {
             repository.insertMemory(memory)
+            _uiEvent.value = "Memory Inserted"
         }
     }
 
@@ -50,12 +54,18 @@ class MemoryViewModel @Inject constructor(
     fun updateMemory(memory: Memory) {
         viewModelScope.launch {
             repository.updateMemory(memory)
+            _uiEvent.value = "Memory Updated"
         }
     }
 
     fun deleteMemory(memory: Memory) {
         viewModelScope.launch {
             repository.deleteMemory(memory)
+            _uiEvent.value = "Memory Deleted"
         }
+    }
+
+    fun clearEvent() {
+        _uiEvent.value = null
     }
 }

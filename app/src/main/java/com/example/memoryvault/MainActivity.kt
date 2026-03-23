@@ -53,7 +53,7 @@ fun AppNavigator(){
             composable(Routes.Home.route){
                 HomeScreen(
                     onAddMemoryNavigation = {
-                        navController.navigate(Routes.AddMemory)
+                        navController.navigate(Routes.AddMemory.route)
                     },
                     onMemoryDetailNavigation = { memoryId ->
                         navController.navigate(Routes.MemoryDetails.createRoute(memoryId))
@@ -78,7 +78,15 @@ fun AppNavigator(){
                 )
             ){
                 val id = it.arguments?.getLong("memoryId") ?: 0L
-                MemoryDetailScreen(id)
+                MemoryDetailScreen(
+                    id,
+                    onUpdate = {
+                        navController.popBackStack()  //to remove from stack
+                    },
+                    onDelete = {
+                        navController.popBackStack()  //to remove from stack
+                    }
+                )
             }
             composable(Routes.Search.route){
                 SearchScreen()

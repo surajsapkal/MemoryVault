@@ -1,5 +1,7 @@
 package com.example.memoryvault.utils
 
+import android.content.Context
+import android.widget.Toast
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -23,6 +25,10 @@ object Utils {
 
         // 5. Format the ZonedDateTime to a String
         return zonedDateTime.format(formatter)
+    }
+
+    fun Context.showToast(message: String){
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
 }
