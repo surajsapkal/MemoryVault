@@ -18,10 +18,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,7 +43,8 @@ fun HomeScreen(
     onMemoryDetailNavigation:(Long) -> Unit,
 ){
 
-    val list = viewmodel.memoriesState.collectAsState()
+    val list = viewmodel.filteredMemories.collectAsState()
+    val searchText by viewmodel.searchText.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -59,22 +62,37 @@ fun HomeScreen(
         Box(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
         ){
-            if (list.value.isEmpty()){
-                // show no memories UI
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "No Memories!",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = viewmodel::onSearchQueryChanged,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    label = { Text("Search memories...") }
                 )
-            }else{
-                // show list UI
-                LazyColumn {
-                    items(list.value,{it.id}){ currentMemory ->
 
-                        MemoryCard(currentMemory, onMemoryDetailNavigation)
+                if (list.value.isEmpty()){
+                    // show no memories UI
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "No Memories!",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }else{
+                    // show list UI
+                    LazyColumn {
+                        items(list.value,{it.id}){ currentMemory ->
 
+                            MemoryCard(currentMemory, onMemoryDetailNavigation)
+
+                        }
                     }
                 }
             }
@@ -89,7 +107,9 @@ fun MemoryCard(currentMemory: Memory, onMemoryDetailNavigation: (Long) -> Unit) 
         modifier = Modifier.fillMaxWidth()
             .padding(20.dp)
             .background(color = Color.White)
-            .clickable(onClick = { onMemoryDetailNavigation(currentMemory.id) })
+            .clickable{
+                onMemoryDetailNavigation?.invoke(currentMemory.id)
+            }
     ){
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
