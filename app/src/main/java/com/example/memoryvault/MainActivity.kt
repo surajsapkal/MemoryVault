@@ -17,7 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.toRoute
+import androidx.work.WorkManager
 import com.example.memoryvault.ui.screens.AddMemoryScreen
 import com.example.memoryvault.ui.screens.HomeScreen
 import com.example.memoryvault.ui.screens.MemoryDetailScreen
@@ -25,17 +25,20 @@ import com.example.memoryvault.ui.screens.SearchScreen
 import com.example.memoryvault.ui.theme.MemoryVaultTheme
 import com.example.memoryvault.ui.viewmodels.MemoryViewModel
 import com.example.memoryvault.utils.Routes
+import com.example.memoryvault.utils.WorkManagerHelper
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val workManager = WorkManager.getInstance(this)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MemoryVaultTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavigator()
+                    AppNavigator(workManager)
                 }
             }
         }
@@ -43,7 +46,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigator(){
+fun AppNavigator(workManager: WorkManager) {
     val navController = rememberNavController()
     val viewModel: MemoryViewModel = hiltViewModel()
     NavHost(
@@ -63,9 +66,11 @@ fun AppNavigator(){
 
             composable(Routes.AddMemory.route){
 
+                val context = LocalContext.current
                 AddMemoryScreen(LocalContext.current){memory ->
                     // on submit handle
                     viewModel.insertMemory(memory)
+                    WorkManagerHelper.scheduleSync(context)
                     navController.popBackStack() //to remove from stack
                 }
             }
