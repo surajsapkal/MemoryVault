@@ -185,7 +185,8 @@ fun MemoryDetailScreen(
                                 title = title,
                                 category = category,
                                 content = content,
-                                timestamp = System.currentTimeMillis()
+                                timestamp = System.currentTimeMillis(),
+                                isSynced = false
                             )
                         )
                         onUpdate()

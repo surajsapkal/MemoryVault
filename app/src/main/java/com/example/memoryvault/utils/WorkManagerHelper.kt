@@ -17,7 +17,7 @@ object WorkManagerHelper {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val request = PeriodicWorkRequestBuilder<PostSyncMemory>(
+        /*val request = PeriodicWorkRequestBuilder<PostSyncMemory>(
             5, TimeUnit.SECONDS
         )
             .setConstraints(constraints)
@@ -28,17 +28,17 @@ object WorkManagerHelper {
                 "post_memory_sync",
                 ExistingPeriodicWorkPolicy.KEEP,
                 request
-            )
+            )*/
 
-        /*val reuest = OneTimeWorkRequestBuilder<PostSyncMemory>()
+        val request = OneTimeWorkRequestBuilder<PostSyncMemory>()
             .setConstraints(constraints).build()
 
         WorkManager.getInstance(context)
             .enqueueUniqueWork(
                 "post_memory_sync",
                 ExistingWorkPolicy.KEEP,
-                reuest
-            )*/
+                request
+            )
 
     }
 

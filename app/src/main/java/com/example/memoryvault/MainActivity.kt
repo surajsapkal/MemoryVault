@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
 fun AppNavigator(workManager: WorkManager) {
     val navController = rememberNavController()
     val viewModel: MemoryViewModel = hiltViewModel()
+    val context = LocalContext.current
     NavHost(
         navController = navController,
         startDestination = Routes.Home.route,
@@ -65,8 +66,6 @@ fun AppNavigator(workManager: WorkManager) {
             }
 
             composable(Routes.AddMemory.route){
-
-                val context = LocalContext.current
                 AddMemoryScreen(LocalContext.current){memory ->
                     // on submit handle
                     viewModel.insertMemory(memory)
@@ -86,9 +85,11 @@ fun AppNavigator(workManager: WorkManager) {
                 MemoryDetailScreen(
                     id,
                     onUpdate = {
+                        WorkManagerHelper.scheduleSync(context)
                         navController.popBackStack()  //to remove from stack
                     },
                     onDelete = {
+                        WorkManagerHelper.scheduleSync(context)
                         navController.popBackStack()  //to remove from stack
                     }
                 )
