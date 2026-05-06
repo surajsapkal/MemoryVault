@@ -8,7 +8,11 @@ import com.example.memoryvault.data.local.dao.MemoryDao
 import com.example.memoryvault.data.local.entity.MemoryEntity
 import com.example.memoryvault.utils.Constants.DATABASE_NAME
 
-@Database(entities = [MemoryEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [MemoryEntity::class],
+    version = 2,
+    exportSchema = true,
+)
 abstract class AppDatabase: RoomDatabase() {
 
     abstract fun memoryDao(): MemoryDao

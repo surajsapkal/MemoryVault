@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.hilt.work)
+    implementation(libs.volley)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -90,4 +91,7 @@ dependencies {
 
     // Work Manager
     implementation("androidx.work:work-runtime-ktx:2.11.1")
+
+    // Coil Image
+    implementation("io.coil-kt:coil-compose:2.7.0")
 }

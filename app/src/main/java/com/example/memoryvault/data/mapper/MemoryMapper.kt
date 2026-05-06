@@ -11,6 +11,8 @@ object MemoryMapper {
             title = entity.title,
             content = entity.content,
             category = entity.category,
+            imageUri = entity.imageUri,
+            type = entity.type,
             timestamp = entity.timestamp,
             reminderTime = entity.reminderTime,
             isSynced = entity.isSynced
@@ -23,6 +25,8 @@ object MemoryMapper {
             title = memory.title,
             content = memory.content,
             category = memory.category,
+            imageUri = memory.imageUri,
+            type = memory.type,
             timestamp = memory.timestamp,
             reminderTime = memory.reminderTime,
             isSynced = memory.isSynced

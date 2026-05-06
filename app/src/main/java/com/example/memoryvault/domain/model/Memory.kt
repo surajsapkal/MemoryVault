@@ -6,6 +6,8 @@ data class Memory(
     val title: String,
     val content: String,
     val category: String,
+    var imageUri: String? = null,
+    var type: String,
     val timestamp: Long,
     val reminderTime: Long?,
     val isSynced: Boolean = false

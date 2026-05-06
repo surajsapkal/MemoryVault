@@ -11,6 +11,8 @@ data class MemoryEntity (
     val title: String,
     val content: String,
     val category: String,
+    var imageUri: String? = null,
+    var type: String,
     val timestamp: Long,
     val reminderTime: Long?,
     val isSynced: Boolean = false // Boolean should not be nullable - null can creates unnecessary cases.

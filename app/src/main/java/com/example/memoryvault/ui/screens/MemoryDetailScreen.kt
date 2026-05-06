@@ -97,7 +97,7 @@ fun MemoryDetailScreen(
             ) {
 
                 Text(
-                    text = "created at ${Utils.convertLongToDateString(currentMemory?.timestamp ?: 0L,"MM/dd/yyyy")}",
+                    text = "created at ${Utils.convertLongToDateString(currentMemory.timestamp ?: 0L,"MM/dd/yyyy")}",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color.Black
@@ -207,11 +207,10 @@ fun MemoryDetailScreen(
                         shape = RoundedCornerShape(10.dp)
                     ),
                     onClick = {
-                        viewmodel.deleteMemory(
-                            memory = currentMemory!!
-                        )
+                        viewmodel.deleteMemory(memory = currentMemory)
                         onDelete()
-                    }) {
+                    }
+                ) {
                     Text(
                         text = "Delete",
                         fontSize = 14.sp,
