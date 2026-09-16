@@ -1,7 +1,9 @@
 package com.example.memoryvault.ui.screens
 
 import android.R.attr.text
+import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,12 +28,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.memoryvault.domain.model.Memory
 import com.example.memoryvault.ui.viewmodels.MemoryViewModel
 import com.example.memoryvault.utils.Utils
@@ -164,6 +169,24 @@ fun MemoryDetailScreen(
                     value = content,
                     onValueChange = { newText -> content = newText },
                     label = { Text("Enter Here") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            if (
+                !currentMemory.imageUri.isNullOrBlank() &&
+                currentMemory.type == "image"
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = Uri.parse(currentMemory.imageUri)
+                    ),
+                    contentDescription = "Memory image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                    contentScale = ContentScale.Crop
                 )
             }
 

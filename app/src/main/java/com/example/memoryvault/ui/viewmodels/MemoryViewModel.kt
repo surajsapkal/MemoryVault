@@ -43,8 +43,8 @@ class MemoryViewModel @Inject constructor(
             list
         }else{
             list.filter {
-                it.title.contains(q,ignoreCase = true)
-                it.content.contains(q,ignoreCase = true)
+                it.title.contains(q,ignoreCase = true) ||
+                it.content.contains(q,ignoreCase = true) ||
                 it.category.contains(q,ignoreCase = true)
             }
         }

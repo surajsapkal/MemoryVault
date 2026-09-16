@@ -255,16 +255,19 @@ fun AddMemoryScreen(
                     Toast.makeText(context, "Please fill the fields!", Toast.LENGTH_SHORT).show()
                 }else{
                     // submit / insert memory
-                    /*onSubmitClick(
+                    onSubmitClick(
                         Memory(
                             id = 0,
                             title = title,
                             content = content,
                             category = category,
                             timestamp = System.currentTimeMillis(),
-                            reminderTime = System.currentTimeMillis()
+                            reminderTime = System.currentTimeMillis(),
+                            isSynced = false,
+                            type = if (selectedUri != null) "image" else "text",
+                            imageUri = selectedUri?.toString()
                         )
-                    )*/
+                    )
                 }
             }
         ) {
