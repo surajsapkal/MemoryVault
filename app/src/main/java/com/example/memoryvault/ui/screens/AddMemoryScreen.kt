@@ -77,22 +77,29 @@ fun AddMemoryScreen(
     val scope = rememberCoroutineScope()
 
     var isPickImage by remember { mutableStateOf(true) }
+    var isPickVideo by remember { mutableStateOf(true) }
     val context = LocalContext.current
 
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var showPickerSheet by remember { mutableStateOf(false) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingVideoUri by remember { mutableStateOf<Uri?>(null) }
+    var imageBottomSheetText by remember { mutableStateOf(false) }
+    var videoBottomSheetText by remember { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) selectedUri = uri
+        if (uri != null) {
+            selectedUri = uri
+            isPickImage = false
+            isPickVideo = false
+        }
         scope.launch { sheetState.hide() }.invokeOnCompletion {
             if (!sheetState.isVisible) {
                 showPickerSheet = false
             }
         }
-        isPickImage = false
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -100,6 +107,8 @@ fun AddMemoryScreen(
     ) { success ->
         if (success) {
             selectedUri = pendingCameraUri
+            isPickImage = false
+            isPickVideo = false
         } else {
             pendingCameraUri = null
         }
@@ -108,7 +117,23 @@ fun AddMemoryScreen(
                 showPickerSheet = false
             }
         }
-        isPickImage = false
+    }
+
+    val videoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CaptureVideo()
+    ) { success ->
+        if (success) {
+            selectedUri = pendingVideoUri
+            isPickImage = false
+            isPickVideo = false
+        } else {
+            pendingVideoUri = null
+        }
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) {
+                showPickerSheet = false
+            }
+        }
     }
 
 
@@ -192,55 +217,126 @@ fun AddMemoryScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        if (isPickImage){
-            // show pick image UI
-            OutlinedButton(
-                modifier = Modifier.width(180.dp),
-                onClick = {
-                    // image capture/pick from gallery
-                    //isPickImage = false
-                    //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    showPickerSheet = true
-                }
-            ) {
-                Text("Pick Image")
-            }
-        }else{
-            // show cancel image UI
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-                    .background(Color.White, RoundedCornerShape(10.dp))
-            ){
+        when{
+            selectedUri == null -> {
+                // outline buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    // Preview Image
-                    Image(
-                        painter = rememberAsyncImagePainter(selectedUri),
-                        contentDescription = "Preview Image", // Required for screen readers
-                        modifier = Modifier.size(40.dp) // Set size, padding, etc.
-                    )
-                    // Image Text
-                    Text(
-                        text = getFileName(context,selectedUri!!) ?: "file_name",
-                        fontSize = 16.sp,
-                    )
+                    // show pick image UI
+                    OutlinedButton(
+                        modifier = Modifier.width(180.dp),
+                        onClick = {
+                            // image capture/pick from gallery
+                            //isPickImage = false
+                            //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            showPickerSheet = true
 
-                    // Cancel Image
-                    Image(
-                        painter = painterResource(id = R.drawable.cancel_img),
-                        contentDescription = "cancelImage", // Required for screen readers
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clickable {
-                                isPickImage = true
-                                selectedUri = null
-                            }
-                    )
+                            imageBottomSheetText = true
+                            videoBottomSheetText = false
+                        }
+                    ) {
+                        Text("Pick Image")
+                    }
+
+                    // show pick video UI
+                    OutlinedButton(
+                        modifier = Modifier.width(180.dp),
+                        onClick = {
+                            // image capture/pick from gallery
+                            //isPickImage = false
+                            //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            showPickerSheet = true
+
+                            imageBottomSheetText = false
+                            videoBottomSheetText = true
+                        }
+                    ) {
+                        Text("Pick Video")
+                    }
+                }
+            }
+            imageBottomSheetText -> {
+                // image captured preview with cancel
+                // show cancel image UI
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .background(Color.White, RoundedCornerShape(10.dp))
+                ){
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        // Preview Image
+                        Image(
+                            painter = rememberAsyncImagePainter(selectedUri),
+                            contentDescription = "Preview Image", // Required for screen readers
+                            modifier = Modifier.size(40.dp) // Set size, padding, etc.
+                        )
+                        // Image Text
+                        Text(
+                            text = getFileName(context,selectedUri!!) ?: "file_name",
+                            fontSize = 16.sp,
+                        )
+
+                        // Cancel Image
+                        Image(
+                            painter = painterResource(id = R.drawable.cancel_img),
+                            contentDescription = "cancelImage", // Required for screen readers
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clickable {
+                                    isPickImage = true
+                                    isPickVideo = true
+                                    selectedUri = null
+                                }
+                        )
+                    }
+                }
+            }
+            else -> {
+                // video captured preview with cancel
+                // show cancel video UI
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .background(Color.White, RoundedCornerShape(10.dp))
+                ){
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        // Preview Video
+                        Image(
+                            painter = rememberAsyncImagePainter(selectedUri),
+                            contentDescription = "Preview Video", // Required for screen readers
+                            modifier = Modifier.size(40.dp) // Set size, padding, etc.
+                        )
+                        // Image Text
+                        Text(
+                            text = getFileName(context,selectedUri!!) ?: "file_name",
+                            fontSize = 16.sp,
+                        )
+
+                        // Cancel Video
+                        Image(
+                            painter = painterResource(id = R.drawable.cancel_img),
+                            contentDescription = "cancelVideo", // Required for screen readers
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clickable {
+                                    isPickImage = true
+                                    isPickVideo = true
+                                    selectedUri = null
+                                }
+                        )
+                    }
                 }
             }
         }
@@ -286,10 +382,12 @@ fun AddMemoryScreen(
             ) {
                 // Sheet content
                 Row(
-                    modifier = Modifier.padding(6.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ){
-                    // Gallery Image
+                    // Gallery Image/Video
                     Column(
                         modifier = Modifier.clickable {
                             /*scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -297,7 +395,8 @@ fun AddMemoryScreen(
                                     showPickerSheet = false
                                 }
                             }*/
-                            galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            if (imageBottomSheetText) galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            if (videoBottomSheetText) galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
                         },
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -325,7 +424,7 @@ fun AddMemoryScreen(
 
                     Spacer(modifier = Modifier.width(20.dp))
 
-                    // Capture Image
+                    // Capture Image/Record Video
                     Column(
                         modifier = Modifier.clickable {
                             /*scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -333,9 +432,17 @@ fun AddMemoryScreen(
                                     showPickerSheet = false
                                 }
                             }*/
-                            val uri = createImageUri(context)
-                            pendingCameraUri = uri
-                            cameraLauncher.launch(uri)
+                            if (imageBottomSheetText){
+                                val uri = createImageUri(context)
+                                pendingCameraUri = uri
+                                cameraLauncher.launch(uri)
+                            }
+
+                            if (videoBottomSheetText){
+                                val uri = createVideoUri(context)
+                                pendingVideoUri = uri
+                                videoLauncher.launch(uri)
+                            }
                         },
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -356,7 +463,7 @@ fun AddMemoryScreen(
 
                         // Text
                         Text(
-                            "Capture Image",
+                            text = if (imageBottomSheetText)"Capture Image" else "Record Video",
                             fontSize = 12.sp
                         )
                     }
@@ -397,6 +504,16 @@ fun createImageUri(context: Context): Uri {
         context,
         "${context.packageName}.fileprovider",
         imageFile
+    )
+}
+
+fun createVideoUri(context: Context): Uri {
+    val videoDir = File(context.cacheDir, "videos").apply { mkdirs() }
+    val videoFile = File(videoDir, "VID_${System.currentTimeMillis()}.mp4")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        videoFile
     )
 }
 
