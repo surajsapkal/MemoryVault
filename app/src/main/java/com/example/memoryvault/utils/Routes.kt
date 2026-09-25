@@ -1,6 +1,7 @@
 package com.example.memoryvault.utils
 
 sealed class Routes(val route: String){
+    data object Login: Routes("login")
     data object Home: Routes("home")
     data object AddMemory: Routes("add_memory")
     data object Search: Routes("search")

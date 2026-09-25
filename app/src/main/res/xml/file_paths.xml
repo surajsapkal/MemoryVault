@@ -2,4 +2,7 @@
 <paths>
     <cache-path name="images_cache" path="images/" />
     <files-path name="images_files" path="images/" />
+
+    <cache-path name="videos_cache" path="videos/" />
+    <files-path name="videos_files" path="videos/" />
 </paths>

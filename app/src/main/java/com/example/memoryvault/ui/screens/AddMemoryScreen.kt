@@ -55,6 +55,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
+import coil.decode.VideoFrameDecoder
+import coil.request.videoFrameMillis
 import com.android.volley.toolbox.ImageRequest
 import com.example.memoryvault.R
 import com.example.memoryvault.domain.model.Memory
@@ -314,7 +316,14 @@ fun AddMemoryScreen(
                     ) {
                         // Preview Video
                         Image(
-                            painter = rememberAsyncImagePainter(selectedUri),
+                            painter = rememberAsyncImagePainter(
+                                coil.request.ImageRequest.Builder(context)
+                                    .data(selectedUri)
+                                    .decoderFactory(VideoFrameDecoder.Factory())
+                                    .videoFrameMillis(0)
+                                    .crossfade(true)
+                                    .build()
+                            ),
                             contentDescription = "Preview Video", // Required for screen readers
                             modifier = Modifier.size(40.dp) // Set size, padding, etc.
                         )

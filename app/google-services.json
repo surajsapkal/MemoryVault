@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "203243043875",
+    "project_id": "memoryvault-bd29a",
+    "storage_bucket": "memoryvault-bd29a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:203243043875:android:dc1a14146dde03d4240596",
+        "android_client_info": {
+          "package_name": "com.example.memoryvault"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpJW14Ew_LUfs3xi11m8GlBwnaCdSq2-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

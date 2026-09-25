@@ -1,6 +1,7 @@
 package com.example.memoryvault
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +21,7 @@ import androidx.navigation.navArgument
 import androidx.work.WorkManager
 import com.example.memoryvault.ui.screens.AddMemoryScreen
 import com.example.memoryvault.ui.screens.HomeScreen
+import com.example.memoryvault.ui.screens.LoginScreen
 import com.example.memoryvault.ui.screens.MemoryDetailScreen
 import com.example.memoryvault.ui.screens.SearchScreen
 import com.example.memoryvault.ui.theme.MemoryVaultTheme
@@ -52,8 +54,20 @@ fun AppNavigator(workManager: WorkManager) {
     val context = LocalContext.current
     NavHost(
         navController = navController,
-        startDestination = Routes.Home.route,
+        startDestination = Routes.Login.route,
         builder = {
+            composable(Routes.Login.route){
+                LoginScreen(
+                    context,
+                    onGetOtp = {mobileNum ->
+                        Log.d("TAG","$mobileNum")
+                    },
+                    onVerifyOtp = { otp ->
+                        Log.d("TAG","$otp")
+                        navController.navigate(Routes.Home.route)
+                    }
+                )
+            }
             composable(Routes.Home.route){
                 HomeScreen(
                     onAddMemoryNavigation = {
