@@ -1,17 +1,30 @@
 package com.example.memoryvault
 
+import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,7 +41,18 @@ import com.example.memoryvault.ui.theme.MemoryVaultTheme
 import com.example.memoryvault.ui.viewmodels.MemoryViewModel
 import com.example.memoryvault.utils.Routes
 import com.example.memoryvault.utils.WorkManagerHelper
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -52,22 +76,69 @@ fun AppNavigator(workManager: WorkManager) {
     val navController = rememberNavController()
     val viewModel: MemoryViewModel = hiltViewModel()
     val context = LocalContext.current
+
+    val scope = rememberCoroutineScope()
+    val auth = remember { FirebaseAuth.getInstance() }
+
+    // Track the currently logged in user
+    var user by remember { mutableStateOf(auth.currentUser) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+
     NavHost(
         navController = navController,
-        startDestination = Routes.Login.route,
+        startDestination = if (user != null){
+            // already logged in
+            Routes.Home.route
+        }else{
+            Routes.Login.route
+        },
         builder = {
             composable(Routes.Login.route){
                 LoginScreen(
                     context,
-                    onGetOtp = {mobileNum ->
-                        Log.d("TAG","$mobileNum")
-                    },
-                    onVerifyOtp = { otp ->
-                        Log.d("TAG","$otp")
-                        navController.navigate(Routes.Home.route)
+                    onGoogleSignIn = {
+
+                        if (user != null){
+                            // already logged in
+                            // skip to home screen
+                            navController.navigate(Routes.Home.route) {
+                                popUpTo(Routes.Login.route) {
+                                    inclusive = true
+                                }
+                            }
+                        }else{
+                            // show login screen
+                            scope.launch {
+                                isLoading = true
+                                errorMessage = null
+
+                                try {
+                                    val firebaseUser = signInWithGoogle(context)
+                                    user = firebaseUser
+
+                                    if (firebaseUser != null) {
+                                        navController.navigate(Routes.Home.route) {
+                                            popUpTo(Routes.Login.route) {
+                                                inclusive = true
+                                            }
+                                        }
+                                    }
+
+                                } catch (e: Exception) {
+                                    Log.e("GoogleSignIn", "Google Sign-In failed", e)
+                                    errorMessage = e.localizedMessage ?: "Authentication Failed"
+                                } finally {
+                                    isLoading = false
+                                }
+                            }
+                        }
+
+                        Log.d("TAG","Sign In with Google")
                     }
                 )
             }
+
             composable(Routes.Home.route){
                 HomeScreen(
                     onAddMemoryNavigation = {
@@ -113,6 +184,41 @@ fun AppNavigator(workManager: WorkManager) {
             }
         }
     )
+}
+
+suspend fun signInWithGoogle(context: Context): com.google.firebase.auth.FirebaseUser? {
+    val credentialManager = CredentialManager.create(context)
+
+    // Retrieve your Web Client ID from the Google Cloud / Firebase console
+    // Ensure you use the Client ID labeled as "Web application"
+    val webClientId = "203243043875-t45q3k1b1h89985vk7rj5ehkg73ev6h9.apps.googleusercontent.com"
+
+    val googleIdOption = GetGoogleIdOption.Builder()
+        .setFilterByAuthorizedAccounts(false) // Set true to only show accounts already linked to your app
+        .setServerClientId(webClientId)
+        .setAutoSelectEnabled(true) // Automatically logs user in if only one account exists
+        .build()
+
+    val request = GetCredentialRequest.Builder()
+        .addCredentialOption(googleIdOption)
+        .build()
+
+    // Show the bottom sheet to the user
+    val result = credentialManager.getCredential(context = context, request = request)
+
+    // Parse the token from the resulting credential
+    val credential = result.credential
+    if (credential.type == com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+        val googleIdTokenCredential = com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.createFrom(credential.data)
+        val idToken = googleIdTokenCredential.idToken
+
+        // Authenticate with Firebase using the ID token
+        val authCredential = GoogleAuthProvider.getCredential(idToken, null)
+        val authResult = FirebaseAuth.getInstance().signInWithCredential(authCredential).await()
+        return authResult.user
+    } else {
+        throw Exception("Received an unexpected credential type.")
+    }
 }
 
 @Composable

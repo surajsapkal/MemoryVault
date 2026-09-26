@@ -12,7 +12,20 @@
           "package_name": "com.example.memoryvault"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "203243043875-c3lmqht9em7mmpf6fe6012orqdh6nesh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.memoryvault",
+            "certificate_hash": "f7e30562a8f542f071ccd866899f8560d085fddb"
+          }
+        },
+        {
+          "client_id": "203243043875-t45q3k1b1h89985vk7rj5ehkg73ev6h9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBpJW14Ew_LUfs3xi11m8GlBwnaCdSq2-I"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "203243043875-t45q3k1b1h89985vk7rj5ehkg73ev6h9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
