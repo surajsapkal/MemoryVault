@@ -23,9 +23,11 @@ class MyApplication: Application(), Provider{
             .setWorkerFactory(workerFactory)
             .build()
 
-    override fun onCreate() {
+    // no need to manually WorkManager.initialize
+    // when we are already using the Configuration.Provider approach.
+    /*override fun onCreate() {
         super.onCreate()
         WorkManager.initialize(this, workManagerConfiguration)
-    }
+    }*/
 
 }

@@ -46,7 +46,7 @@ import com.example.memoryvault.utils.Utils
 fun HomeScreen(
     viewmodel: MemoryViewModel = hiltViewModel(),
     onAddMemoryNavigation:() -> Unit,
-    onMemoryDetailNavigation:(Long) -> Unit,
+    onMemoryDetailNavigation:(String) -> Unit,
 ){
 
     val list = viewmodel.filteredMemories.collectAsState()
@@ -107,14 +107,14 @@ fun HomeScreen(
 }
 
 @Composable
-fun MemoryCard(currentMemory: Memory, onMemoryDetailNavigation: (Long) -> Unit) {
+fun MemoryCard(currentMemory: Memory, onMemoryDetailNavigation: (String) -> Unit) {
 
     Box(
         modifier = Modifier.fillMaxWidth()
             .padding(20.dp)
             .background(color = Color.White)
             .clickable{
-                onMemoryDetailNavigation?.invoke(currentMemory.id)
+                onMemoryDetailNavigation.invoke(currentMemory.id)
             }
     ){
         Column(modifier = Modifier.fillMaxSize()) {

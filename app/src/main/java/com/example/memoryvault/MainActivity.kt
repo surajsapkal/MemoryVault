@@ -1,20 +1,19 @@
 package com.example.memoryvault
 
-import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,8 +22,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat.getString
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -42,29 +43,21 @@ import com.example.memoryvault.ui.viewmodels.MemoryViewModel
 import com.example.memoryvault.utils.Routes
 import com.example.memoryvault.utils.WorkManagerHelper
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
-import com.google.firebase.auth.PhoneAuthProvider
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val workManager = WorkManager.getInstance(this)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MemoryVaultTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavigator(workManager)
+                    AppNavigator()
                 }
             }
         }
@@ -72,7 +65,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigator(workManager: WorkManager) {
+fun AppNavigator() {
     val navController = rememberNavController()
     val viewModel: MemoryViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -84,6 +77,16 @@ fun AppNavigator(workManager: WorkManager) {
     var user by remember { mutableStateOf(auth.currentUser) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
+
+    val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
+        if (user != null) {
+            navController.navigate(Routes.Home.route) {
+                popUpTo(Routes.Login.route) {
+                    inclusive = true
+                }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -101,7 +104,7 @@ fun AppNavigator(workManager: WorkManager) {
 
                         if (user != null){
                             // already logged in
-                            // skip to home screen
+                            // go to home screen
                             navController.navigate(Routes.Home.route) {
                                 popUpTo(Routes.Login.route) {
                                     inclusive = true
@@ -125,6 +128,12 @@ fun AppNavigator(workManager: WorkManager) {
                                         }
                                     }
 
+                                } catch (e: NoCredentialException){
+                                    launcher.launch(
+                                        Intent(Settings.ACTION_ADD_ACCOUNT).apply {
+                                            putExtra(Settings.EXTRA_ACCOUNT_TYPES,arrayOf("com.google"))
+                                        }
+                                    )
                                 } catch (e: Exception) {
                                     Log.e("GoogleSignIn", "Google Sign-In failed", e)
                                     errorMessage = e.localizedMessage ?: "Authentication Failed"
@@ -145,7 +154,9 @@ fun AppNavigator(workManager: WorkManager) {
                         navController.navigate(Routes.AddMemory.route)
                     },
                     onMemoryDetailNavigation = { memoryId ->
-                        navController.navigate(Routes.MemoryDetails.createRoute(memoryId))
+                        navController.navigate(
+                            Routes.MemoryDetails.createRoute(memoryId)
+                        )
                     }
                 )
             }
@@ -162,11 +173,11 @@ fun AppNavigator(workManager: WorkManager) {
                 route = Routes.MemoryDetails.route,
                 arguments = listOf(
                     navArgument("memoryId"){
-                        type = NavType.LongType
+                        type = NavType.StringType
                     }
                 )
             ){
-                val id = it.arguments?.getLong("memoryId") ?: 0L
+                val id = it.arguments?.getString("memoryId") ?: ""
                 MemoryDetailScreen(
                     id,
                     onUpdate = {
@@ -191,11 +202,10 @@ suspend fun signInWithGoogle(context: Context): com.google.firebase.auth.Firebas
 
     // Retrieve your Web Client ID from the Google Cloud / Firebase console
     // Ensure you use the Client ID labeled as "Web application"
-    val webClientId = "203243043875-t45q3k1b1h89985vk7rj5ehkg73ev6h9.apps.googleusercontent.com"
 
     val googleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false) // Set true to only show accounts already linked to your app
-        .setServerClientId(webClientId)
+        .setServerClientId(getString(context,R.string.web_client_id))
         .setAutoSelectEnabled(true) // Automatically logs user in if only one account exists
         .build()
 

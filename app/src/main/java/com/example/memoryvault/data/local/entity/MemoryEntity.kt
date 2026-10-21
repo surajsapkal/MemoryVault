@@ -6,8 +6,8 @@ import com.example.memoryvault.utils.Constants.TABLE_NAME
 
 @Entity(tableName = TABLE_NAME)
 data class MemoryEntity (
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0, // Set this value - Because Room generates ID.
+    @PrimaryKey()
+    val id: String, // instead of room auto generate id we will use UID
     val title: String,
     val content: String,
     val category: String,
@@ -15,5 +15,8 @@ data class MemoryEntity (
     var type: String,
     val timestamp: Long,
     val reminderTime: Long?,
-    val isSynced: Boolean = false // Boolean should not be nullable - null can creates unnecessary cases.
+    val createdAt: Long,
+    val updatedAt: Long,
+    val isSynced: Boolean = false, // Boolean should not be nullable - null can create unnecessary cases.
+    val isDeleted: Boolean = false,
 )

@@ -44,7 +44,7 @@ import com.example.memoryvault.utils.Utils.showToast
 
 @Composable
 fun MemoryDetailScreen(
-    memoryId: Long,
+    memoryId: String,
     onUpdate:() -> Unit,
     onDelete:() -> Unit,
     viewmodel: MemoryViewModel = hiltViewModel()
@@ -209,7 +209,6 @@ fun MemoryDetailScreen(
                                 category = category,
                                 content = content,
                                 timestamp = System.currentTimeMillis(),
-                                isSynced = false
                             )
                         )
                         onUpdate()

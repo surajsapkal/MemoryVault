@@ -60,8 +60,11 @@ import coil.request.videoFrameMillis
 import com.android.volley.toolbox.ImageRequest
 import com.example.memoryvault.R
 import com.example.memoryvault.domain.model.Memory
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,6 +91,8 @@ fun AddMemoryScreen(
     var pendingVideoUri by remember { mutableStateOf<Uri?>(null) }
     var imageBottomSheetText by remember { mutableStateOf(false) }
     var videoBottomSheetText by remember { mutableStateOf(false) }
+
+    val now = System.currentTimeMillis()
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -362,15 +367,18 @@ fun AddMemoryScreen(
                     // submit / insert memory
                     onSubmitClick(
                         Memory(
-                            id = 0,
+                            id = UUID.randomUUID().toString(),
                             title = title,
                             content = content,
                             category = category,
-                            timestamp = System.currentTimeMillis(),
-                            reminderTime = System.currentTimeMillis(),
-                            isSynced = false,
+                            imageUri = selectedUri?.toString(),
                             type = if (selectedUri != null) "image" else "text",
-                            imageUri = selectedUri?.toString()
+                            timestamp = now,
+                            reminderTime = null,
+                            createdAt = now,
+                            updatedAt = now,
+                            isSynced = false,
+                            isDeleted = false
                         )
                     )
                 }

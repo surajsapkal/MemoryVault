@@ -2,13 +2,16 @@ package com.example.memoryvault.domain.model
 
 
 data class Memory(
-    val id: Long,
+    val id: String,
     val title: String,
     val content: String,
     val category: String,
-    var imageUri: String? = null,
-    var type: String,
+    val imageUri: String? = null,
+    val type: String,
     val timestamp: Long,
     val reminderTime: Long?,
-    val isSynced: Boolean = false
+    val createdAt: Long,
+    val updatedAt: Long,
+    val isSynced: Boolean = false,
+    val isDeleted: Boolean = false
 )

@@ -1,19 +1,18 @@
 package com.example.memoryvault.ui.viewmodels
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.memoryvault.domain.model.Memory
+import com.example.memoryvault.data.remote.model.FirestoreMemory
 import com.example.memoryvault.domain.repository.MemoryRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,7 +22,7 @@ class MemoryViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _selectedMemory = MutableStateFlow<Memory?>(null)
-    val selectedMemory: StateFlow<Memory?> = _selectedMemory
+    val selectedMemory: StateFlow<Memory?> = _selectedMemory.asStateFlow()
 
     private val _uiEvent = MutableStateFlow<String?>(null)
     val uiEvent: StateFlow<String?> = _uiEvent
@@ -54,13 +53,6 @@ class MemoryViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
-    val unsyncedMemories = repository.getUnsyncedMemories()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-
     fun insertMemory(memory: Memory) {
         viewModelScope.launch {
             repository.insertMemory(memory)
@@ -68,7 +60,7 @@ class MemoryViewModel @Inject constructor(
         }
     }
 
-    fun getMemoryById(id: Long) {
+    fun getMemoryById(id: String) {
         viewModelScope.launch {
             _selectedMemory.value = repository.getMemoryById(id)
         }
