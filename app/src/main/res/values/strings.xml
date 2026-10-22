@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">MemoryVault</string>
     <string name="web_client_id">203243043875-t45q3k1b1h89985vk7rj5ehkg73ev6h9.apps.googleusercontent.com</string>
+    <string name="title_activity_content_result">ContentResultActivity</string>
 </resources>

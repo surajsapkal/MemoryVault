@@ -1,10 +1,16 @@
 package com.example.memoryvault.ui.screens
 
 import android.R.attr.text
+import android.app.Activity
+import android.app.Activity.RESULT_OK
+import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.memoryvault.domain.model.Memory
+import com.example.memoryvault.ui.ContentResultActivity
 import com.example.memoryvault.ui.viewmodels.MemoryViewModel
 import com.example.memoryvault.utils.Utils
 import com.example.memoryvault.utils.Utils.showToast
@@ -77,13 +84,22 @@ fun MemoryDetailScreen(
         }
     }
 
+    // Register launcher inside Compose
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val returnedData = result.data?.getStringExtra("return_key")
+            // Handle result
+        }
+    }
+
     if (currentMemory == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Loading...")
         }
         return
     }
-
 
     Box(
         modifier = Modifier
@@ -185,7 +201,13 @@ fun MemoryDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable(true, onClick = {
+                            val intent = Intent(context, ContentResultActivity::class.java).apply {
+                                putExtra("param_key", currentMemory.imageUri)
+                            }
+                            launcher.launch(intent)
+                        }),
                     contentScale = ContentScale.Crop
                 )
             }

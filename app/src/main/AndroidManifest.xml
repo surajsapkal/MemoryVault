@@ -27,7 +27,6 @@
             </intent-filter>
         </activity>
 
-
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -37,7 +36,6 @@
                 android:name="androidx.work.WorkManagerInitializer"
                 tools:node="remove" />
         </provider>
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -48,6 +46,12 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <activity
+            android:name=".ui.ContentResultActivity"
+            android:exported="false"
+            android:label="@string/title_activity_content_result"
+            android:theme="@style/Theme.MemoryVault"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>
