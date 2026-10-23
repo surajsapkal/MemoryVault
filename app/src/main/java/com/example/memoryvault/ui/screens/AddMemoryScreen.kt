@@ -1,7 +1,13 @@
 package com.example.memoryvault.ui.screens
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,6 +15,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,10 +42,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +61,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
@@ -62,8 +73,11 @@ import com.example.memoryvault.R
 import com.example.memoryvault.domain.model.Memory
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 import java.io.File
+import java.util.Locale
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,6 +105,31 @@ fun AddMemoryScreen(
     var pendingVideoUri by remember { mutableStateOf<Uri?>(null) }
     var imageBottomSheetText by remember { mutableStateOf(false) }
     var videoBottomSheetText by remember { mutableStateOf(false) }
+    var audioBottomSheetText by remember { mutableStateOf(false) }
+    var documentBottomSheetText by remember { mutableStateOf(false) }
+
+    var audioRecord: AudioRecord? = null
+    var isRecording by remember { mutableStateOf(false) }
+    var recordingThread: Thread? = null
+
+    val sampleRate = 44105
+    val channelConfig = AudioFormat.CHANNEL_IN_MONO
+    val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+
+    // For Audio
+    // 1. Keep track of the elapsed time in seconds
+    var timeInSeconds by rememberSaveable { mutableLongStateOf(0L) }
+
+    // 2. Track whether the timer is currently ticking
+    var isRunning by rememberSaveable { mutableStateOf(false) }
+
+    // 3. Coroutine effect that ticks every second only while isRunning is true
+    LaunchedEffect(isRunning) {
+        while (isRunning) {
+            delay(1000L)
+            timeInSeconds++
+        }
+    }
 
     val now = System.currentTimeMillis()
 
@@ -143,6 +182,69 @@ fun AddMemoryScreen(
         }
     }
 
+    val audioLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { success ->
+        selectedUri = success
+        isPickImage = false
+        isPickVideo = false
+        scope.launch { sheetState.hide() }.invokeOnCompletion {
+            if (!sheetState.isVisible) {
+                showPickerSheet = false
+            }
+        }
+    }
+
+    // 1. Register the permission launcher for record audio
+    val audioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission granted
+            // start audio recording
+            isRecording = true
+            showPickerSheet = false
+            //startStreaming()
+        } else {
+            // Permission denied
+            // show toast message
+            Toast.makeText(context, "Audio Permission Denied!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /*@SuppressLint("MissingPermission")
+    fun startStreaming() {
+        val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            sampleRate,
+            channelConfig,
+            audioFormat,
+            minBufferSize
+        )
+
+        audioRecord?.startRecording()
+        isRecording = true
+
+        recordingThread = Thread {
+            val buffer = ByteArray(minBufferSize)
+            while (isRecording) {
+                val readCount = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                if (readCount > 0) {
+                    //onAudioDataReceived(buffer, readCount)
+                }
+            }
+        }.apply { start() }
+    }*/
+
+    /*fun stopStreaming() {
+        isRecording = false
+        recordingThread?.join()
+        recordingThread = null
+        audioRecord?.stop()
+        audioRecord?.release()
+        audioRecord = null
+    }*/
 
     Column(
         modifier = Modifier
@@ -224,170 +326,332 @@ fun AddMemoryScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        when{
-            selectedUri == null -> {
-                // outline buttons
+        if (isRecording){
+            // show audio recording UI
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
+                // Timer Text
+                Text(
+                    text = formatTime(timeInSeconds),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                //Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // show pick image UI
-                    OutlinedButton(
-                        modifier = Modifier.width(180.dp),
-                        onClick = {
-                            // image capture/pick from gallery
-                            //isPickImage = false
-                            //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            showPickerSheet = true
-
-                            imageBottomSheetText = true
-                            videoBottomSheetText = false
-                        }
-                    ) {
-                        Text("Pick Image")
-                    }
-
-                    // show pick video UI
-                    OutlinedButton(
-                        modifier = Modifier.width(180.dp),
-                        onClick = {
-                            // image capture/pick from gallery
-                            //isPickImage = false
-                            //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            showPickerSheet = true
-
-                            imageBottomSheetText = false
-                            videoBottomSheetText = true
-                        }
-                    ) {
-                        Text("Pick Video")
-                    }
-                }
-            }
-            imageBottomSheetText -> {
-                // image captured preview with cancel
-                // show cancel image UI
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .background(Color.White, RoundedCornerShape(10.dp))
-                ){
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        // Preview Image
+                    // Cancel Button at Left
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Black,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                isRecording = false
+                                isRunning = false
+                                timeInSeconds = 0L
+                            },
+                        contentAlignment = Alignment.Center
+                    ){
                         Image(
-                            painter = rememberAsyncImagePainter(selectedUri),
-                            contentDescription = "Preview Image", // Required for screen readers
-                            modifier = Modifier.size(40.dp) // Set size, padding, etc.
+                            modifier = Modifier.size(20.dp),
+                            painter = painterResource(id = R.drawable.cancel),
+                            contentDescription = "Audio Cancel"
                         )
-                        // Image Text
+                    }
+
+                    // Start/Resume Button at Center
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(Color.Gray)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Black,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                // start timer
+                                isRunning = !isRunning
+
+                                // start recording
+                            },
+                        contentAlignment = Alignment.Center
+                    ){
                         Text(
-                            text = getFileName(context,selectedUri!!) ?: "file_name",
+                            text = if (isRunning) "Stop" else {
+                                if (timeInSeconds == 0L) "Start" else "Resume"
+                            },
                             fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
                         )
+                    }
 
-                        // Cancel Image
+                    // Done/Complete Button at right
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Black,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                // show recorded file
+                                isRecording = false
+                                isRunning = false
+                                timeInSeconds = 0L
+
+                                imageBottomSheetText = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ){
                         Image(
-                            painter = painterResource(id = R.drawable.cancel_img),
-                            contentDescription = "cancelImage", // Required for screen readers
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clickable {
-                                    isPickImage = true
-                                    isPickVideo = true
-                                    selectedUri = null
-                                }
+                            modifier = Modifier.size(20.dp),
+                            painter = painterResource(id = R.drawable.done),
+                            contentDescription = "Audio Done"
                         )
                     }
                 }
             }
-            else -> {
-                // video captured preview with cancel
-                // show cancel video UI
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .background(Color.White, RoundedCornerShape(10.dp))
-                ){
-                    Row(
+        }else{
+            when{
+                selectedUri == null -> {
+
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        // Preview Video
-                        Image(
-                            painter = rememberAsyncImagePainter(
-                                coil.request.ImageRequest.Builder(context)
-                                    .data(selectedUri)
-                                    .decoderFactory(VideoFrameDecoder.Factory())
-                                    .videoFrameMillis(0)
-                                    .crossfade(true)
-                                    .build()
-                            ),
-                            contentDescription = "Preview Video", // Required for screen readers
-                            modifier = Modifier.size(40.dp) // Set size, padding, etc.
-                        )
-                        // Image Text
-                        Text(
-                            text = getFileName(context,selectedUri!!) ?: "file_name",
-                            fontSize = 16.sp,
-                        )
+                        // outline buttons Image - Video
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            // show pick image UI
+                            OutlinedButton(
+                                modifier = Modifier.width(180.dp),
+                                onClick = {
+                                    // image capture/pick from gallery
+                                    //isPickImage = false
+                                    //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    showPickerSheet = true
 
-                        // Cancel Video
-                        Image(
-                            painter = painterResource(id = R.drawable.cancel_img),
-                            contentDescription = "cancelVideo", // Required for screen readers
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clickable {
-                                    isPickImage = true
-                                    isPickVideo = true
-                                    selectedUri = null
+                                    imageBottomSheetText = true
+                                    videoBottomSheetText = false
+                                    audioBottomSheetText = false
+                                    documentBottomSheetText = false
                                 }
-                        )
+                            ) {
+                                Text("Pick Image")
+                            }
+
+                            // show pick video UI
+                            OutlinedButton(
+                                modifier = Modifier.width(180.dp),
+                                onClick = {
+                                    // image capture/pick from gallery
+                                    //isPickImage = false
+                                    //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    showPickerSheet = true
+
+                                    videoBottomSheetText = true
+                                    imageBottomSheetText = false
+                                    audioBottomSheetText = false
+                                    documentBottomSheetText = false
+                                }
+                            ) {
+                                Text("Pick Video")
+                            }
+                        }
+
+                        // outline buttons Audio - Doc
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            // show pick image UI
+                            OutlinedButton(
+                                modifier = Modifier.width(180.dp),
+                                onClick = {
+                                    // image capture/pick from gallery
+                                    //isPickImage = false
+                                    //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    showPickerSheet = true
+
+                                    audioBottomSheetText = true
+                                    imageBottomSheetText = false
+                                    videoBottomSheetText = false
+                                    documentBottomSheetText = false
+                                }
+                            ) {
+                                Text("Pick Audio")
+                            }
+
+                            // show pick video UI
+                            OutlinedButton(
+                                modifier = Modifier.width(180.dp),
+                                onClick = {
+                                    // image capture/pick from gallery
+                                    //isPickImage = false
+                                    //singlePhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    showPickerSheet = true
+
+                                    documentBottomSheetText = true
+                                    imageBottomSheetText = false
+                                    videoBottomSheetText = false
+                                    audioBottomSheetText = false
+                                }
+                            ) {
+                                Text("Pick Document")
+                            }
+                        }
+                    }
+                }
+                imageBottomSheetText -> {
+                    // image captured preview with cancel
+                    // show cancel image UI
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                            .background(Color.White, RoundedCornerShape(10.dp))
+                    ){
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            // Preview Image
+                            Image(
+                                painter = rememberAsyncImagePainter(selectedUri),
+                                contentDescription = "Preview Image", // Required for screen readers
+                                modifier = Modifier.size(40.dp) // Set size, padding, etc.
+                            )
+                            // Image Text
+                            Text(
+                                text = getFileName(context,selectedUri!!) ?: "file_name",
+                                fontSize = 16.sp,
+                            )
+
+                            // Cancel Image
+                            Image(
+                                painter = painterResource(id = R.drawable.cancel_img),
+                                contentDescription = "cancelImage", // Required for screen readers
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clickable {
+                                        isPickImage = true
+                                        isPickVideo = true
+                                        selectedUri = null
+
+                                        isRecording = false
+                                    }
+                            )
+                        }
+                    }
+                }
+                else -> {
+                    // video captured preview with cancel
+                    // show cancel video UI
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                            .background(Color.White, RoundedCornerShape(10.dp))
+                    ){
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            // Preview Video
+                            Image(
+                                painter = rememberAsyncImagePainter(
+                                    coil.request.ImageRequest.Builder(context)
+                                        .data(selectedUri)
+                                        .decoderFactory(VideoFrameDecoder.Factory())
+                                        .videoFrameMillis(0)
+                                        .crossfade(true)
+                                        .build()
+                                ),
+                                contentDescription = "Preview Video", // Required for screen readers
+                                modifier = Modifier.size(40.dp) // Set size, padding, etc.
+                            )
+                            // Image Text
+                            Text(
+                                text = getFileName(context,selectedUri!!) ?: "file_name",
+                                fontSize = 16.sp,
+                            )
+
+                            // Cancel Video
+                            Image(
+                                painter = painterResource(id = R.drawable.cancel_img),
+                                contentDescription = "cancelVideo", // Required for screen readers
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clickable {
+                                        isPickImage = true
+                                        isPickVideo = true
+                                        selectedUri = null
+                                    }
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-        OutlinedButton(
-            modifier = Modifier.width(100.dp),
-            onClick = {
-                if (title.isEmpty() || category.isEmpty() || content.isEmpty()){
-                    // show validation toast
-                    Toast.makeText(context, "Please fill the fields!", Toast.LENGTH_SHORT).show()
-                }else{
-                    // submit / insert memory
-                    onSubmitClick(
-                        Memory(
-                            id = UUID.randomUUID().toString(),
-                            title = title,
-                            content = content,
-                            category = category,
-                            imageUri = selectedUri?.toString(),
-                            type = if (selectedUri != null) "image" else "text",
-                            timestamp = now,
-                            reminderTime = null,
-                            createdAt = now,
-                            updatedAt = now,
-                            isSynced = false,
-                            isDeleted = false
+            OutlinedButton(
+                modifier = Modifier.width(100.dp),
+                onClick = {
+                    if (title.isEmpty() || category.isEmpty() || content.isEmpty()){
+                        // show validation toast
+                        Toast.makeText(context, "Please fill the fields!", Toast.LENGTH_SHORT).show()
+                    }else{
+                        // submit / insert memory
+                        onSubmitClick(
+                            Memory(
+                                id = UUID.randomUUID().toString(),
+                                title = title,
+                                content = content,
+                                category = category,
+                                imageUri = selectedUri?.toString(),
+                                type = if (selectedUri != null) "image" else "text",
+                                timestamp = now,
+                                reminderTime = null,
+                                createdAt = now,
+                                updatedAt = now,
+                                isSynced = false,
+                                isDeleted = false
+                            )
                         )
-                    )
+                    }
                 }
+            ) {
+                Text("Submit")
             }
-        ) {
-            Text("Submit")
-        }
 
-        Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+        }
 
         if (showPickerSheet) {
             ModalBottomSheet(
@@ -414,6 +678,7 @@ fun AddMemoryScreen(
                             }*/
                             if (imageBottomSheetText) galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                             if (videoBottomSheetText) galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+                            if (audioBottomSheetText) audioLauncher.launch("audio/*")
                         },
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -434,14 +699,14 @@ fun AddMemoryScreen(
 
                         // Text
                         Text(
-                            "Pick from Gallery",
+                            "Pick from Device",
                             fontSize = 12.sp
                         )
                     }
 
                     Spacer(modifier = Modifier.width(20.dp))
 
-                    // Capture Image/Record Video
+                    // Capture Image/Record Video/Audio
                     Column(
                         modifier = Modifier.clickable {
                             /*scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -459,6 +724,10 @@ fun AddMemoryScreen(
                                 val uri = createVideoUri(context)
                                 pendingVideoUri = uri
                                 videoLauncher.launch(uri)
+                            }
+
+                            if (audioBottomSheetText){
+                                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                             }
                         },
                         verticalArrangement = Arrangement.Center,
@@ -480,7 +749,12 @@ fun AddMemoryScreen(
 
                         // Text
                         Text(
-                            text = if (imageBottomSheetText)"Capture Image" else "Record Video",
+                            text = when{
+                                imageBottomSheetText -> "Capture Image"
+                                videoBottomSheetText -> "Capture Video"
+                                audioBottomSheetText -> "Record Audio"
+                                else -> "Capture Image"
+                            },
                             fontSize = 12.sp
                         )
                     }
@@ -534,6 +808,16 @@ fun createVideoUri(context: Context): Uri {
     )
 }
 
+fun createAudioUri(context: Context): Uri {
+    val audioDir = File(context.cacheDir, "audios").apply { mkdirs() }
+    val audioFile = File(audioDir, "AUD_${System.currentTimeMillis()}.mp3")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        audioFile
+    )
+}
+
 fun getFileName(context: Context, uri: Uri): String? {
     var result: String? = null
     if (uri.scheme == "content") {
@@ -556,4 +840,12 @@ fun getFileName(context: Context, uri: Uri): String? {
         }
     }
     return result
+}
+
+// To convert raw seconds to a structured HH:MM:SS format
+private fun formatTime(totalSeconds: Long): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
 }

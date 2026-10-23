@@ -5,4 +5,7 @@
 
     <cache-path name="videos_cache" path="videos/" />
     <files-path name="videos_files" path="videos/" />
+
+    <cache-path name="audios_cache" path="audios/" />
+    <files-path name="audios_files" path="audios/" />
 </paths>
